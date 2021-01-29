@@ -67,8 +67,6 @@
 
 <!-- APP -->
 <div id="wrapper">
-	<div id="switch-container"><span id="switch-create-button"><span data-localize="creator_mode">Creator mode</span> <span id="switch-create" class="switch disabled"></span></span></div>
-
 	<div id="tab0" class="tab">
 		<div class="row">
 			<div class="leftcol"><label for="input-file-rom" data-localize="rom_file">ROM file:</label></div>
@@ -107,6 +105,43 @@
 		</div>
 	</div>
 
+	<div id="tab0" class="tab">
+		<div class="row">
+			<div class="leftcol"><label for="input-file-rom" data-localize="rom_file">ROM file:</label></div>
+			<div class="rightcol">
+				<input type="file" id="input-file-rom" class="enabled" />
+			</div>
+		</div>
+		<div class="row" id="rom-info">
+			<div class="leftcol">CRC32:</div><div class="rightcol"><span id="crc32"></span></div>
+			<div class="leftcol">MD5:</div><div class="rightcol"><span id="md5"></span></div>
+			<div class="leftcol">SHA-1:</div><div class="rightcol"><span id="sha1"></span></div>
+		</div>
+		<div class="row" id="row-removeheader">
+			<div class="leftcol"></div>
+			<div class="rightcol">
+				<input type="checkbox" id="checkbox-removeheader" /> <label for="checkbox-removeheader" data-localize="remove_header">Remove header before patching</label>
+			</div>
+		</div>
+		<div class="row" id="row-addheader">
+			<div class="leftcol"></div>
+			<div class="rightcol">
+				<input type="checkbox" id="checkbox-addheader" /> <label for="checkbox-addheader" data-localize="add_header">Add temporary header</label> <small>(<label id="headersize" for="checkbox-addheader"></label>)</small>
+			</div>
+		</div>
+
+		<div class="row" id="row-file-patch">
+			<div class="leftcol"><label for="input-file-patch" data-localize="patch_file">Patch file:</label></div>
+			<div class="rightcol">
+				<input type="file" id="input-file-patch" accept=".ips,.ups,.bps,.aps,.rup,.ppf,.mod,.xdelta,.zip"/>
+			</div>
+		</div>
+
+		<div class="buttons">
+			<span id="message-apply" class="message"></span>
+			<button id="button-apply" data-localize="apply_patch" class="disabled" disabled>Apply patch</button>
+		</div>
+	</div>
 
 
 	<div id="tab1" class="tab">
