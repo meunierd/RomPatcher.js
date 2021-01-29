@@ -25,7 +25,7 @@ var fetchedPatches;
 var userLanguage;
 
 var CAN_USE_WEB_WORKERS=true;
-var webWorkerApply,webWorkerCreate,webWorkerCrc;
+var webWorkerApply,webWorkerCrc;
 try{
 	webWorkerApply=new Worker('./js/worker_apply.js');
 	webWorkerApply.onmessage = event => { // listen for events from the worker
@@ -50,23 +50,6 @@ try{
 		setTabApplyEnabled(true);
 		setMessage('apply', _(event.message.replace('Error: ','')), 'error');
 	};
-
-
-
-	webWorkerCreate=new Worker('./js/worker_create.js');
-	webWorkerCreate.onmessage = event => { // listen for events from the worker
-		var newPatchFile=new MarcFile(event.data.patchFileU8Array);
-		newPatchFile.fileName=romFile2.fileName.replace(/\.[^\.]+$/,'')+'.'+el('select-patch-type').value;
-		newPatchFile.save();
-
-		setMessage('create');
-		setTabCreateEnabled(true);
-	};
-	webWorkerCreate.onerror = event => { // listen for events from the worker
-		setTabCreateEnabled(true);
-		setMessage('create', _(event.message.replace('Error: ','')), 'error');
-	};
-
 
 
 	webWorkerCrc=new Worker('./js/worker_crc.js');
@@ -211,8 +194,6 @@ addEvent(window,'load',function(){
 	var langCode=(navigator.language || navigator.userLanguage).substr(0,2);
 	if(typeof localStorage!=='undefined' && localStorage.getItem('rompatcher-js-lang'))
 		langCode=localStorage.getItem('rompatcher-js-lang');
-	el('select-language').value=langCode;
-	setLanguage(langCode);
 
 	
 	el('row-file-patch').title=_('compatible_formats')+' IPS, UPS, APS, BPS, RUP, PPF, MOD (Paper Mario Star Rod), xdelta';
@@ -265,30 +246,7 @@ addEvent(window,'load',function(){
 			}
 		});
 		fetchPatch(select.value);
-	}else{
-		setTabCreateEnabled(true);
-		el('input-file-rom1').value='';
-		el('input-file-rom2').value='';
-
-		el('switch-container').style.visibility='visible';
-
-		addEvent(el('input-file-patch'), 'change', function(){
-			setTabApplyEnabled(false);
-			patchFile=new MarcFile(this, _readPatchFile)
-		});
-		addEvent(el('input-file-rom1'), 'change', function(){
-			setTabCreateEnabled(false);
-			romFile1=new MarcFile(this, function(){setTabCreateEnabled(true)});
-		});
-		addEvent(el('input-file-rom2'), 'change', function(){
-			setTabCreateEnabled(false);
-			romFile2=new MarcFile(this, function(){setTabCreateEnabled(true)});
-		});
 	}
-
-
-
-
 
 	addEvent(el('checkbox-removeheader'), 'change', function(){
 		if(this.checked)
@@ -296,8 +254,6 @@ addEvent(window,'load',function(){
 		else
 			updateChecksums(romFile, 0);
 	});
-
-	//setCreatorMode(true);
 });
 
 
@@ -533,77 +489,6 @@ function applyPatch(p,r,validateChecksums){
 	}
 }
 
-
-
-
-
-
-
-function createPatch(sourceFile, modifiedFile, mode){
-	if(!sourceFile){
-		setMessage('create', 'No source ROM file specified.', 'error');
-		return false;
-	}else if(!modifiedFile){
-		setMessage('create', 'No modified ROM file specified.', 'error');
-		return false;
-	}
-
-
-	if(CAN_USE_WEB_WORKERS){
-		setTabCreateEnabled(false);
-
-		setMessage('create', _('creating_patch'), 'loading');
-
-		webWorkerCreate.postMessage(
-			{
-				sourceFileU8Array:sourceFile._u8array,
-				modifiedFileU8Array:modifiedFile._u8array,
-				modifiedFileName:modifiedFile.fileName,
-				patchMode:mode
-			},[
-				sourceFile._u8array.buffer,
-				modifiedFile._u8array.buffer
-			]
-		);
-		
-		romFile1=new MarcFile(el('input-file-rom1'));
-		romFile2=new MarcFile(el('input-file-rom2'));
-	}else{
-		try{
-			sourceFile.seek(0);
-			modifiedFile.seek(0);
-
-			var newPatch;
-			if(mode==='ips'){
-				newPatch=createIPSFromFiles(sourceFile, modifiedFile);
-			}else if(mode==='bps'){
-				newPatch=createBPSFromFiles(sourceFile, modifiedFile, (sourceFile.fileSize<=4194304));
-			}else if(mode==='ups'){
-				newPatch=createUPSFromFiles(sourceFile, modifiedFile);
-			}else if(mode==='aps'){
-				newPatch=createAPSFromFiles(sourceFile, modifiedFile);
-			}else if(mode==='rup'){
-				newPatch=createRUPFromFiles(sourceFile, modifiedFile);
-			}else{
-				setMessage('create', _('error_invalid_patch'), 'error');
-			}
-
-
-			if(crc32(modifiedFile)===crc32(newPatch.apply(sourceFile))){
-				newPatch.export(modifiedFile.fileName.replace(/\.[^\.]+$/,'')).save();
-			}else{
-				setMessage('create', 'Unexpected error: verification failed. Patched file and modified file mismatch. Please report this bug.', 'error');
-			}
-
-		}catch(e){
-			setMessage('create', 'Error: '+_(e.message), 'error');
-		}
-	}
-}
-
-
-
-
 /* GUI functions */
 function setMessage(tab, msg, className){
 	var messageBox=el('message-'+tab);
@@ -652,22 +537,10 @@ function setTabCreateEnabled(status){
 }
 function setTabApplyEnabled(status){
 	setElementEnabled('input-file-rom', status);
-	setElementEnabled('input-file-patch', status);
 	if(romFile && status && (patch || typeof PREDEFINED_PATCHES!=='undefined')){
 		setElementEnabled('button-apply', status);
 	}else{
 		setElementEnabled('button-apply', false);
-	}
-}
-function setCreatorMode(creatorMode){
-	if(creatorMode){
-		el('tab0').style.display='none';
-		el('tab1').style.display='block';
-		el('switch-create').className='switch enabled'
-	}else{
-		el('tab0').style.display='block';
-		el('tab1').style.display='none';
-		el('switch-create').className='switch disabled'
 	}
 }
 
@@ -677,7 +550,6 @@ function setCreatorMode(creatorMode){
 /* Event listeners */
 
 document.addEventListener('DOMContentLoaded', function() {
-document.getElementById("switch-create-button").addEventListener('click', function(){setCreatorMode(!/enabled/.test(el('switch-create').className))})
 document.getElementById("button-apply").addEventListener('click', function(){applyPatch(patch, romFile, false)})
 document.getElementById("button-create").addEventListener('click', function(){createPatch(romFile1, romFile2, el('select-patch-type').value)})
 document.getElementById("select-language").addEventListener('change', function(){setLanguage(this.value)})
