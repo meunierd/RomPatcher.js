@@ -78,7 +78,7 @@ try{
 /* Shortcuts */
 function addEvent(e,ev,f){e.addEventListener(ev,f,false)}
 function el(e){return document.getElementById(e)}
-function _(str){return userLanguage[str] || str}
+function _(str){return 'en'}
 
 
 
@@ -196,10 +196,8 @@ addEvent(window,'load',function(){
 		langCode=localStorage.getItem('rompatcher-js-lang');
 
 	
-	el('row-file-patch').title=_('compatible_formats')+' IPS, UPS, APS, BPS, RUP, PPF, MOD (Paper Mario Star Rod), xdelta';
-	
 	el('input-file-rom').value='';
-	el('input-file-patch').value='';
+	// el('input-file-patch').value='';
 	setTabApplyEnabled(true);
 
 	addEvent(el('input-file-rom'), 'change', function(){
@@ -219,8 +217,8 @@ addEvent(window,'load',function(){
 	if(typeof PREDEFINED_PATCHES!=='undefined'){
 		fetchedPatches={};
 
-		var container=el('input-file-patch').parentElement;
-		container.removeChild(el('input-file-patch'));
+		// var container=el('input-file-patch').parentElement;
+		// container.removeChild(el('input-file-patch'));
 
 		var select=document.createElement('select');
 		select.id='input-file-patch';
@@ -230,8 +228,8 @@ addEvent(window,'load',function(){
 			option.innerHTML=PREDEFINED_PATCHES[i].name;
 			select.appendChild(option);
 		}
-		container.appendChild(select)
-		container.parentElement.title='';
+		// container.appendChild(select)
+		// container.parentElement.title='';
 
 
 		addEvent(select,'change',function(){
@@ -551,8 +549,6 @@ function setTabApplyEnabled(status){
 
 document.addEventListener('DOMContentLoaded', function() {
 document.getElementById("button-apply").addEventListener('click', function(){applyPatch(patch, romFile, false)})
-document.getElementById("button-create").addEventListener('click', function(){createPatch(romFile1, romFile2, el('select-patch-type').value)})
-document.getElementById("select-language").addEventListener('change', function(){setLanguage(this.value)})
 })
 
 
