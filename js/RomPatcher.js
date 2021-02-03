@@ -36,7 +36,7 @@ try{
 		}
 		patchFile._u8array=event.data.patchFileU8Array;
 		patchFile._dataView=new DataView(patchFile._u8array.buffer);
-				
+
 		if(event.data.patchedRomU8Array)
 			preparePatchedRom(romFile, new MarcFile(event.data.patchedRomU8Array.buffer), headerSize);
 
@@ -111,7 +111,7 @@ function fetchPatch(uri){
 		xhr.open('GET', patchURI, true);
 		xhr.responseType='arraybuffer';
 
-		xhr.onload=function(evt){
+		xhr.onload=function(e){
 			if(this.status===200){
 				fetchedPatches[patchURI]=patchFile=new MarcFile(xhr.response);
 				fetchedPatches[patchURI].fileName=patchURI.replace(/^(.*?\/)+/g, '');
@@ -121,7 +121,7 @@ function fetchPatch(uri){
 			}
 		};
 
-		xhr.onerror=function(evt){
+		xhr.onerror=function(e){
 			setMessage('apply', _('error_downloading'), 'error');
 		};
 
@@ -158,24 +158,6 @@ function _parseROM(){
 	}
 }
 
-
-
-function setLanguage(langCode){
-	if(typeof LOCALIZATION[langCode]==='undefined')
-		langCode='en';
-
-	userLanguage=LOCALIZATION[langCode];
-
-	var translatableElements=document.querySelectorAll('*[data-localize]');
-	for(var i=0; i<translatableElements.length; i++){
-		translatableElements[i].innerHTML=_(translatableElements[i].dataset.localize);
-	}
-	
-	if(typeof localStorage!=='undefined'){
-		localStorage.setItem('rompatcher-js-lang', langCode);
-	}
-}
-
 /* initialize app */
 addEvent(window,'load',function(){
 	/* zip-js web worker */
@@ -190,14 +172,7 @@ addEvent(window,'load',function(){
 		document.getElementsByTagName('head')[0].appendChild(script);
 	}
 
-	/* language */
-	var langCode=(navigator.language || navigator.userLanguage).substr(0,2);
-	if(typeof localStorage!=='undefined' && localStorage.getItem('rompatcher-js-lang'))
-		langCode=localStorage.getItem('rompatcher-js-lang');
-
-	
 	el('input-file-rom').value='';
-	// el('input-file-patch').value='';
 	setTabApplyEnabled(true);
 
 	addEvent(el('input-file-rom'), 'change', function(){
@@ -214,7 +189,7 @@ addEvent(window,'load',function(){
 
 
 	/* predefined patches */
-	if(typeof PREDEFINED_PATCHES!=='undefined'){
+	if(PREDEFINED_PATCHES){
 		fetchedPatches={};
 
 		// var container=el('input-file-patch').parentElement;
@@ -277,7 +252,7 @@ function hasHeader(romFile){
 				return HEADERS_INFO[i][1];
 			}
 		}
-	} 
+	}
 	return 0;
 }
 
@@ -419,7 +394,7 @@ function preparePatchedRom(originalRom, patchedRom, headerSize){
 	/*if(fixedChecksum){
 		setMessage('apply','Checksum was fixed','warning');
 	}*/
-	
+
 	//debug: create unheadered patch
 	/*if(headerSize && el('checkbox-addheader').checked){
 		createPatch(romFile, patchedRom);
@@ -510,6 +485,9 @@ function setMessage(tab, msg, className){
 }
 
 function setElementEnabled(element,status){
+	if ( !element ) {
+		return
+	}
 	if(status){
 		el(element).className='enabled';
 	}else{
