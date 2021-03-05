@@ -15,12 +15,10 @@ const HEADERS_INFO=[
 const FORCE_HTTPS=true;
 if(FORCE_HTTPS && location.protocol==='http:')
 	location.href=window.location.href.replace('http:','https:');
-else if(location.protocol==='https:' && 'serviceWorker' in navigator)
-	navigator.serviceWorker.register('/RomPatcher.js/_cache_service_worker.js', {scope: '/RomPatcher.js/'});
 
 
 
-var romFile, patchFile, patch, romFile1, romFile2, tempFile, headerSize, oldHeader;
+var romFile, gbaRom, iosRom, gbaPatchFile, patchFile, patch, romFile1, romFile2, tempFile, headerSize, oldHeader;
 var fetchedPatches;
 var userLanguage;
 
@@ -111,7 +109,7 @@ function fetchPatch(uri){
 		xhr.open('GET', patchURI, true);
 		xhr.responseType='arraybuffer';
 
-		xhr.onload=function(e){
+		xhr.onload=function(_e){
 			if(this.status===200){
 				fetchedPatches[patchURI]=patchFile=new MarcFile(xhr.response);
 				fetchedPatches[patchURI].fileName=patchURI.replace(/^(.*?\/)+/g, '');
@@ -121,7 +119,7 @@ function fetchPatch(uri){
 			}
 		};
 
-		xhr.onerror=function(e){
+		xhr.onerror=function(_e){
 			setMessage('apply', _('error_downloading'), 'error');
 		};
 
@@ -137,7 +135,7 @@ function _parseROM(){
 	if(romFile.readString(4).startsWith(ZIP_MAGIC)){
 		parseZIPFile(romFile);
 		setTabApplyEnabled(false);
-	}else{
+	} else {
 		if(headerSize=canHaveFakeHeader(romFile)){
 			el('row-addheader').style.display='flex';
 			if(headerSize<1024){
@@ -172,55 +170,9 @@ addEvent(window,'load',function(){
 		document.getElementsByTagName('head')[0].appendChild(script);
 	}
 
-	el('input-file-rom').value='';
-	setTabApplyEnabled(true);
-
-	addEvent(el('input-file-rom'), 'change', function(){
-		setTabApplyEnabled(false);
-		romFile=new MarcFile(this, _parseROM);
-	});
-
-
-	/* dirty fix for mobile Safari https://stackoverflow.com/a/19323498 */
-	if(/Mobile\/\S+ Safari/.test(navigator.userAgent)){
-		el('input-file-patch').accept='';
-	}
-
-
 
 	/* predefined patches */
-	if(PREDEFINED_PATCHES){
-		fetchedPatches={};
-
-		// var container=el('input-file-patch').parentElement;
-		// container.removeChild(el('input-file-patch'));
-
-		var select=document.createElement('select');
-		select.id='input-file-patch';
-		for(var i=0; i<PREDEFINED_PATCHES.length; i++){
-			var option=document.createElement('option');
-			option.value=PREDEFINED_PATCHES[i].patch;
-			option.innerHTML=PREDEFINED_PATCHES[i].name;
-			select.appendChild(option);
-		}
-		// container.appendChild(select)
-		// container.parentElement.title='';
-
-
-		addEvent(select,'change',function(){
-			if(fetchedPatches[this.value.replace(/\#.*?$/, '')]){
-				patchFile=fetchedPatches[this.value.replace(/\#.*?$/, '')];
-				patchFile.seek(0);
-				_readPatchFile();
-			}else{
-				patch=null;
-				patchFile=null;
-				fetchPatch(this.value);
-			}
-		});
-		fetchPatch(select.value);
-	}
-
+	
 	addEvent(el('checkbox-removeheader'), 'change', function(){
 		if(this.checked)
 			updateChecksums(romFile, headerSize);
@@ -464,36 +416,36 @@ function applyPatch(p,r,validateChecksums){
 
 /* GUI functions */
 function setMessage(tab, msg, className){
-	var messageBox=el('message-'+tab);
-	if(msg){
-		if(className==='loading'){
-			messageBox.className='message';
-			messageBox.innerHTML='<span class="loading"></span> '+msg;
-		}else{
-			messageBox.className='message '+className;
-			if(className==='warning')
-				messageBox.innerHTML='&#9888; '+msg;
-			else if(className==='error')
-				messageBox.innerHTML='&#10007; '+msg;
-			else
-				messageBox.innerHTML=msg;
-		}
-		messageBox.style.display='inline';
-	}else{
-		messageBox.style.display='none';
-	}
+	// var messageBox=el('message-'+tab);
+	// if(msg){
+	// 	if(className==='loading'){
+	// 		messageBox.className='message';
+	// 		messageBox.innerHTML='<span class="loading"></span> '+msg;
+	// 	}else{
+	// 		messageBox.className='message '+className;
+	// 		if(className==='warning')
+	// 			messageBox.innerHTML='&#9888; '+msg;
+	// 		else if(className==='error')
+	// 			messageBox.innerHTML='&#10007; '+msg;
+	// 		else
+	// 			messageBox.innerHTML=msg;
+	// 	}
+	// 	messageBox.style.display='inline';
+	// }else{
+	// 	messageBox.style.display='none';
+	// }
 }
 
 function setElementEnabled(element,status){
-	if ( !element ) {
-		return
-	}
-	if(status){
-		el(element).className='enabled';
-	}else{
-		el(element).className='disabled';
-	}
-	el(element).disabled=!status;
+	// if ( !element ) {
+	// 	return
+	// }
+	// if(status){
+	// 	el(element).className='enabled';
+	// }else{
+	// 	el(element).className='disabled';
+	// }
+	// el(element).disabled=!status;
 }
 function setTabCreateEnabled(status){
 	if(
@@ -525,9 +477,13 @@ function setTabApplyEnabled(status){
 
 /* Event listeners */
 
+gbaPatchFile = fetchPatch('./SMT1_1_gba.bps');
 document.addEventListener('DOMContentLoaded', function() {
-document.getElementById("button-apply").addEventListener('click', function(){applyPatch(patch, romFile, false)})
-})
+	document.getElementById("button-apply").addEventListener('click', function() {
+		// SMT GBA logic
+		patchedGbaRom = applyPatch(patch, romFile, false);
+	})
+});
 
 
 
