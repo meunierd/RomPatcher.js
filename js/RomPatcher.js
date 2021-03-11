@@ -19,7 +19,7 @@ if(FORCE_HTTPS && location.protocol==='http:')
 
 
 var romFile, gbaRom, iosRom, gbaPatchFile, patchFile, patch, romFile1, romFile2, tempFile, headerSize, oldHeader;
-var fetchedPatches;
+var fetchedPatches = {};
 var userLanguage;
 
 var CAN_USE_WEB_WORKERS=true;
@@ -85,11 +85,8 @@ function fetchPatch(uri){
 	setMessage('apply', _('downloading'), 'loading');
 
 
-	var isCompressed=/\#/.test(uri);
 	var patchURI=decodeURI(uri.replace(/\#.*?$/, ''));
-	//console.log(patchURI);
-	var compressedName=uri.replace(/^.*?\#/,'');
-	//console.log(compressedName);
+	console.log(patchURI);
 
 
 	if(typeof window.fetch==='function'){
@@ -172,7 +169,7 @@ addEvent(window,'load',function(){
 
 
 	/* predefined patches */
-	
+
 	addEvent(el('checkbox-removeheader'), 'change', function(){
 		if(this.checked)
 			updateChecksums(romFile, headerSize);
@@ -311,9 +308,6 @@ function _readPatchFile(){
 }
 
 
-
-
-
 function preparePatchedRom(originalRom, patchedRom, headerSize){
 	patchedRom.fileName=originalRom.fileName.replace(/\.([^\.]*?)$/, ' (patched).$1');
 	patchedRom.fileType=originalRom.fileType;
@@ -364,7 +358,7 @@ function applyPatch(p,r,validateChecksums){
 		if(headerSize){
 			if(el('checkbox-removeheader').checked){
 				//r._dataView=new DataView(r._dataView.buffer, headerSize);
-				oldHeader=r.slice(0,headerSize);
+				oldHeader=r.slice(0, headerSize);
 				r=r.slice(headerSize);
 			}else if(el('checkbox-addheader').checked){
 				var romWithFakeHeader=new MarcFile(headerSize+r.fileSize);
@@ -476,15 +470,21 @@ function setTabApplyEnabled(status){
 
 
 /* Event listeners */
-
-gbaPatchFile = fetchPatch('./SMT1_1_gba.bps');
+var gbaPatchUri = './SMT1_1_gba.bps';
+var iosPatchUri = './SMT1_2_ios.bps';
+fetchPatch(gbaPatchUri);
+fetchPatch(iosPatchUri);
 document.addEventListener('DOMContentLoaded', function() {
 	document.getElementById("button-apply").addEventListener('click', function() {
 		// SMT GBA logic
-		patchedGbaRom = applyPatch(patch, romFile, false);
+		gbaPatchFile = fetchedPatches[gbaPatchUri];
+		iosPatchFile = fetchedPatches[iosPatchUri];
+		patchedGbaRom = applyPatch(gbaPatchFile, romFile1, false);
+		patchedIosRom = applyPatch(iosPatchFile, romFile2, false);
+
+		//concatenate
 	})
 });
-
 
 
 
